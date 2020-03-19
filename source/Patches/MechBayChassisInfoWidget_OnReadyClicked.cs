@@ -11,6 +11,8 @@ namespace CustomSalvage
     [HarmonyPatch("OnReadyClicked")]
     public static class MechBayChassisInfoWidget_OnReadyClicked
     {
+        private static readonly SimGameState Sim = UnityGameInstance.BattleTechGame.Simulation;
+        public static float MainPartsUsed = 1;
 
         [HarmonyPrefix]
         public static bool OnReadyClicked(ChassisDef ___selectedChassis, MechBayPanel ___mechBay
@@ -24,16 +26,23 @@ namespace CustomSalvage
 
             if (___mechBay.Sim.GetFirstFreeMechBay() < 0)
             {
-                GenericPopupBuilder.Create("Cannot Ready 'Mech", "There are no available slots in the 'Mech Bay. You must move an active 'Mech into storage before readying this chassis.").AddFader(new UIColorRef?(LazySingletonBehavior<UIManager>.Instance.UILookAndColorConstants.PopupBackfill), 0f, true).Render();
+                GenericPopupBuilder.Create("Cannot Ready 'Mech", "There are no available slots in the 'Mech Bay. " +
+                    "You must move an active 'Mech into storage before readying this chassis.").
+                    AddFader(new UIColorRef?(LazySingletonBehavior<UIManager>.Instance.UILookAndColorConstants.PopupBackfill), 0f, true)
+                    .Render();
                 return false;
             }
 
             ChassisHandler.PreparePopup(___selectedChassis, ___mechBay, __instance, ___chassisElement);
+            float ReadyDelay = 1;
+            if (Control.Settings.UseReadyDelay)
+                ReadyDelay = ___mechBay.Sim.Constants.Story.DefaultMechPartMax - MainPartsUsed + 1;
+
 
             if (___selectedChassis.MechPartCount == 0)
             {
 
-                int num2 = Mathf.CeilToInt((float) ___mechBay.Sim.Constants.Story.MechReadyTime /
+                int num2 = Mathf.CeilToInt((float) ReadyDelay * ___mechBay.Sim.Constants.Story.MechReadyTime /
                                            (float) ___mechBay.Sim.MechTechSkill);
 
                 GenericPopupBuilder.Create("Ready 'Mech?",

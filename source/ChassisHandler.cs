@@ -278,6 +278,8 @@ namespace CustomSalvage
                 if (Control.Settings.UnEquipedMech)
                 {
                     Control.LogDebug($"-- Clear Inventory");
+
+
 #if USE_CC
                     new_mech.SetInventory(DefaultHelper.ClearInventory(new_mech, mechBay.Sim));
 #else

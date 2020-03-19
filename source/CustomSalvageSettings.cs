@@ -68,6 +68,9 @@ namespace CustomSalvage
 
         public LogLevel LogLevel = LogLevel.Debug;
 
+        public bool UseReadyDelay = true;
+        public float AssembledTimeBonusFactor = 0.5f;
+
 
         public RecoveryCalculationType RecoveryType = RecoveryCalculationType.PartDestroyed;
         public PartCalculationType PartCountType = PartCalculationType.PartDestroyedIgnoreCT;
