@@ -137,6 +137,7 @@ namespace CustomSalvage
 
         public bool UnEquipedMech = false;
         public bool BrokenMech = true;
+        public float MaxRecoveryChance = 1.0f;
 
         public bool RepairChanceByTP = false;
         public int BaseTP = 10;

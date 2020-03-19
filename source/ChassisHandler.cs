@@ -16,6 +16,7 @@ using UnityEngine.Events;
 
 using Object = System.Object;
 using Random = System.Random;
+using System.Text.RegularExpressions;
 
 namespace CustomSalvage
 {
@@ -401,6 +402,20 @@ namespace CustomSalvage
                         LimbChance = Mathf.Clamp(LimbChance + ltp, Control.Settings.LimbMinChance, Control.Settings.LimbMaxChance);
                         CompFChance = Mathf.Clamp(CompFChance + ctp, Control.Settings.ComponentMinChance, Control.Settings.ComponentMaxChance);
                         CompNFChance = Mathf.Clamp(CompNFChance + ctp, CompFChance, Control.Settings.ComponentMaxChance);
+
+                        if (Control.Settings.UseReadyDelay)
+                        {
+                            string tempTagName = mech.MechTags.First(x => x.StartsWith($"CSO-Building-"));
+                            var match = Regex.Match(tempTagName, @"CSO-Building-(.+)~(\d)$");
+                            var MDString = match.Groups[1].ToString();
+                            var MDCount = float.Parse(match.Groups[2].ToString());
+                            float chance = MDCount / sim.Constants.Story.DefaultMechPartMax;
+                            chance = Mathf.Clamp(chance, 0, Control.Settings.MaxRecoveryChance);
+                            CompFChance = chance;
+                            CompNFChance = -1;
+                            mech.MechTags.Remove(tempTagName);
+
+                        }
                     }
                 }
 

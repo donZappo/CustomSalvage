@@ -108,6 +108,7 @@
     <Compile Include="ContractHelper.cs" />
     <Compile Include="LostUnitActions.cs" />
     <Compile Include="PartsNumCalculations.cs" />
+    <Compile Include="Patches\ReadyMech.cs" />
     <Compile Include="Patches\Contract_GenerateSalvage.cs" />
     <Compile Include="Control.cs" />
     <Compile Include="CustomSalvageSettings.cs" />
