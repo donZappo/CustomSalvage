@@ -53,7 +53,7 @@ namespace CustomSalvage
                         ___readyBtnObj.SetActive(true);
                         ___partsCountObj.SetActive(false);
                         MechBayChassisInfoWidget_OnReadyClicked.MainPartsUsed = ___selectedChassis.MechPartCount;
-                        ___chassisStorageTooltip.SetDefaultStateData(TooltipUtilities.GetStateDataFromObject("Chassis can by assembled using other parts: Press Ready to move to a Bay"));
+                        ___chassisStorageTooltip.SetDefaultStateData(TooltipUtilities.GetStateDataFromObject("Chassis can be assembled using other parts: Press Ready to move to a Bay"));
                     }
                 }
             }
@@ -61,7 +61,6 @@ namespace CustomSalvage
             {
                 ___readyBtnObj.SetActive(true);
                 ___partsCountObj.SetActive(false);
-                MechBayChassisInfoWidget_OnReadyClicked.MainPartsUsed =  (float) ___selectedChassis.MechPartMax + Control.Settings.AssembledTimeBonusFactor;
                 ___chassisStorageTooltip.SetDefaultStateData(TooltipUtilities.GetStateDataFromObject("Chassis in storage: Press Ready to move to a Bay"));
             }
 

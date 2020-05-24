@@ -24,6 +24,7 @@ namespace CustomSalvage
     {
         private static int min_parts = 0;
         private static int min_parts_special = 0;
+        public static Dictionary<string, int> MD_ForAssembly = new Dictionary<string, int>();
 
         public class mech_info
         {
@@ -237,6 +238,7 @@ namespace CustomSalvage
 
         public static void OnChassisReady()
         {
+
             mechBay.OnReadyMech(unitElement);
             infoWidget.SetData(mechBay, null);
         }
@@ -295,16 +297,24 @@ namespace CustomSalvage
 
             if (Control.Settings.BrokenMech)
             {
-                BrokeMech(new_mech, sim);
+                //BrokeMech(new_mech, sim);
 
             }
 
             try
             {
-                Control.LogDebug("-- Adding mech");
-                mechBay.Sim.AddMech(0, new_mech, true, false, true, null);
+                Control.LogDebug("-- Adding mech: " + unitElement.ChassisDef.Description.Id);
+                mechBay.OnReadyMech(unitElement);
+                //mechBay.Sim.AddMech(0, new_mech, true, false, true, null);
                 Control.LogDebug("-- Posting Message");
-                mechBay.Sim.MessageCenter.PublishMessage(new SimGameMechAddedMessage(new_mech, chassis.MechPartMax, true));
+                //mechBay.Sim.MessageCenter.PublishMessage(new SimGameMechAddedMessage(new_mech, chassis.MechPartMax, true));
+                //foreach (var mech in MD_ForAssembly.Keys)
+                //{
+                //    Control.LogDebug("Got you SUCKER: " + mech);
+                //    string BuildingString = "CSO-Building-" + mech + "~" + MD_ForAssembly[mech];
+                //    new_mech.MechTags.Add(BuildingString);
+                //}
+
             }
             catch (Exception e)
             {
@@ -313,7 +323,7 @@ namespace CustomSalvage
 
         }
 
-        private static void BrokeMech(MechDef new_mech, SimGameState sim)
+        public static void BrokeMech(MechDef new_mech, SimGameState sim)
         {
             try
             {
@@ -326,8 +336,18 @@ namespace CustomSalvage
                 float CompFChance = Control.Settings.RepairComponentsFunctionalThreshold;
                 float CompNFChance = Control.Settings.RepairComponentsNonFunctionalThreshold;
 
-
-                if (Control.Settings.RepairChanceByTP)
+                if (Control.Settings.UseReadyDelay && new_mech.MechTags.First(x => x.StartsWith($"CSO-MainParts-")) != null)
+                {
+                    string tempTagName = new_mech.MechTags.First(x => x.StartsWith($"CSO-MainParts-"));
+                    var match = Regex.Match(tempTagName, @"CSO-MainParts-(\d)$");
+                    var MDCount = float.Parse(match.Groups[1].ToString());
+                    float chance = MDCount / sim.Constants.Story.DefaultMechPartMax;
+                    chance = Mathf.Clamp(chance, 0, Control.Settings.MaxRecoveryChance);
+                    CompFChance = chance;
+                    CompNFChance = -1;
+                    new_mech.MechTags.Remove(tempTagName);
+                }
+                else if (Control.Settings.RepairChanceByTP)
                 {
                     var basetp = Control.Settings.BaseTP;
                     var limbtp = Control.Settings.LimbChancePerTp;
@@ -405,16 +425,14 @@ namespace CustomSalvage
 
                         if (Control.Settings.UseReadyDelay)
                         {
-                            string tempTagName = mech.MechTags.First(x => x.StartsWith($"CSO-Building-"));
-                            var match = Regex.Match(tempTagName, @"CSO-Building-(.+)~(\d)$");
-                            var MDString = match.Groups[1].ToString();
-                            var MDCount = float.Parse(match.Groups[2].ToString());
+                            string tempTagName = mech.MechTags.First(x => x.StartsWith($"CSO-MainParts-"));
+                            var match = Regex.Match(tempTagName, @"CSO-MainParts-(\d)$");
+                            var MDCount = float.Parse(match.Groups[1].ToString());
                             float chance = MDCount / sim.Constants.Story.DefaultMechPartMax;
                             chance = Mathf.Clamp(chance, 0, Control.Settings.MaxRecoveryChance);
                             CompFChance = chance;
                             CompNFChance = -1;
                             mech.MechTags.Remove(tempTagName);
-
                         }
                     }
                 }
@@ -496,11 +514,13 @@ namespace CustomSalvage
                     new_mech.LeftLeg.CurrentInternalStructure = 0f;
                 else if (Control.Settings.RandomStructureOnRepairedLimbs)
                     new_mech.LeftLeg.CurrentInternalStructure *= Math.Min(Control.Settings.MinStructure, (float)rnd.NextDouble());
-
+                
                 Control.LogDebug($"-- broke equipment");
-
                 foreach (var cref in new_mech.Inventory)
                 {
+                    if (cref.Def.Description.Id.StartsWith("emod") || cref.ComponentDefID.StartsWith("mech_"))
+                        continue;
+
                     if (new_mech.IsLocationDestroyed(cref.MountedLocation))
                     {
                         Control.LogDebug($"---- {cref.ComponentDefID} - location destroyed");
@@ -520,7 +540,7 @@ namespace CustomSalvage
                         {
                             Control.LogDebug(
                                 $"---- {cref.ComponentDefID} - {roll} vs {CompNFChance} - broken ");
-                            cref.DamageLevel = ComponentDamageLevel.NonFunctional;
+                            cref.DamageLevel = ComponentDamageLevel.Destroyed;
                         }
                         else
                         {
@@ -542,11 +562,18 @@ namespace CustomSalvage
         {
             var method = mechBay.Sim.GetType()
                 .GetMethod("RemoveItemStat", BindingFlags.NonPublic | BindingFlags.Instance);
+            MD_ForAssembly.Add(id, count);
 
             for (int i = 0; i < count; i++)
             {
-                method.Invoke(mechBay.Sim, new Object[] { id, "MECHPART", false });
+                mechBay.Sim.RemoveItemStat(id, "MECHPART", false);
+                //method.Invoke(mechBay.Sim, new Object[] { id, "MECHPART", false });
             }
+        }
+
+        public static string GetItemStatID(string id, string type)
+        {
+            return $"Item.{type}.{id}";
         }
 
         public static void StartDialog()
@@ -643,6 +670,7 @@ namespace CustomSalvage
         {
             var text = new Text(mech.Description.UIName);
             var result = "Assembling <b><color=#20ff20>" + text.ToString() + "</color></b> Using `Mech Parts:\n";
+            var sim = UnityGameInstance.BattleTechGame.Simulation;
 
             foreach (var info in used_parts)
             {
@@ -664,7 +692,13 @@ namespace CustomSalvage
             if (left > 0)
                 result += $"\n\nNeed <color=#ff2020>{left}</color> more {(left == 1 ? "part" : "parts")}";
             else
+            {
+                float partsUsed = MechBayChassisInfoWidget_OnReadyClicked.MainPartsUsed;
+                float ReadyDelay = sim.Constants.Story.DefaultMechPartMax - partsUsed + 1;
+                int ReadyTime = Mathf.CeilToInt( ReadyDelay * sim.Constants.Story.MechReadyTime / sim.MechTechSkill);
+                result += $"\n\n  <b>Ready Time:</b> <color=#ff00ff>{ReadyTime} days.</color>";
                 result += $"\n\nPreparations complete. Proceed?";
+            }
             return result;
         }
 
@@ -755,20 +789,27 @@ namespace CustomSalvage
         private static void CompeteMech()
         {
 
-            Control.LogDebug($"Compete mech {mech.Description.UIName}({mech.Description.Id})");
+            Control.LogDebug($"Complete mech {mech.Description.UIName}({mech.Description.Id})");
             try
             {
                 Control.LogDebug($"-- remove parts");
                 infoWidget.SetData(mechBay, null);
+                MD_ForAssembly.Clear();
                 foreach (var info in used_parts)
                 {
                     if (info.used > 0)
+                    {
                         RemoveMechPart(info.mechid, info.used);
+                    }
                 }
 
                 int total = used_parts.Sum(i => i.cbills * i.used);
                 Control.LogDebug($"-- take money {total}");
                 mechBay.Sim.AddFunds(-total);
+                var BuildingString = "CSO-Money-" + mech.Description.Id + "~" + total;
+                BuildingString.Replace("chassisdef", "mechdef");
+                MD_ForAssembly.Add(BuildingString, 1);
+
                 used_parts.Clear();
                 Control.LogDebug($"-- making mech");
                 MakeMech(mechBay.Sim);
