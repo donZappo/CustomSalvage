@@ -668,8 +668,10 @@ namespace CustomSalvage
 
         public static string GetCurrentDescription()
         {
-            var text = new Text(mech.Description.UIName);
-            var result = "Assembling <b><color=#20ff20>" + text.ToString() + "</color></b> Using `Mech Parts:\n";
+            var text = new Text("Yeah, I can do it... but it's going take me some time and I'll have to buy parts from the locals to make it happen. " +
+                "Also, don't expect me to be a magician -- the more outside parts I have to use, the less usable equipment the 'Mech will come equipped with.\n\n");
+            var desctext = new Text(mech.Description.UIName);
+            var result = text.ToString() + "Assembling <b><color=#20ff20>" + desctext.ToString() + "</color></b> Using `Mech Parts:\n";
             var sim = UnityGameInstance.BattleTechGame.Simulation;
 
             foreach (var info in used_parts)
