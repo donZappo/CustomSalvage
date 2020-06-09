@@ -86,10 +86,10 @@ namespace CustomSalvage
                 Traverse.Create(order.Mech).Field("inventory").SetValue(__instance.DataManager.MechDefs.Get(order.Mech.Description.Id).Inventory);
             if (order.Mech.MechTags.Contains("CSO-AssembledFromParts"))
             {
-                Control.LogDebug("Are we even in here?");
                 Traverse.Create(order.Mech).Field("inventory").SetValue(__instance.DataManager.MechDefs.Get(order.Mech.Description.Id).Inventory);
                 ChassisHandler.BrokeMech(order.Mech, __instance);
             }
+            order.Mech.MechTags = __instance.DataManager.MechDefs.Get(order.Mech.Description.Id).MechTags;
         }
     }
 }
