@@ -72,6 +72,24 @@ namespace CustomSalvage
         public float AssembledTimeBonusFactor = 0.5f;
 
 
+        public bool UpgradeItems = false;
+        public float EliteRareUpgradeChance = 0;
+        public float VeryRareUpgradeChance = 0;
+        public float RareUpgradeChance = 0;
+        public float UpgradeChanceDivisor = 0;
+        public float[] EliteRareUpgradeLevel = { 0 };
+        public float[] VeryRareUpgradeLevel = { 0 };
+        public float[] RareUpgradeLevel = { 0 };
+
+        public float EliteRareWeaponChance = 0;
+        public float VeryRareWeaponChance = 0;
+        public float RareWeaponChance = 0;
+        public float WeaponChanceDivisor = 0;
+        public float[] EliteRareWeaponLevel = { 0 };
+        public float[] VeryRareWeaponLevel = { 0 };
+        public float[] RareWeaponLevel = { 0 };
+
+
         public RecoveryCalculationType RecoveryType = RecoveryCalculationType.PartDestroyed;
         public PartCalculationType PartCountType = PartCalculationType.PartDestroyedIgnoreCT;
         public LostMechActionType LostMechAction = LostMechActionType.ReturnItemsToPlayer;

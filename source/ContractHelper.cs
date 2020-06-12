@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using System.Reflection;
 using BattleTech;
 using BattleTech.Data;
+using HBS.Collections;
+using System.Linq;
+using System.Text;
+using BattleTech.Framework;
 #if USE_CC
 using CustomComponents;
 #endif
@@ -181,61 +185,79 @@ namespace CustomSalvage
 
                     if (def.ComponentType == ComponentType.Weapon)
                     {
-                        float num2 = ((float)Contract.Override.finalDifficulty + sc.Salvage.VeryRareWeaponChance) / sc.Salvage.WeaponChanceDivisor;
-                        float num3 = ((float)Contract.Override.finalDifficulty + sc.Salvage.RareWeaponChance) / sc.Salvage.WeaponChanceDivisor;
-
+                        var num = chance;
+                        float num1 = ((float)Contract.Override.finalDifficulty + Control.Settings.EliteRareWeaponChance) / Control.Settings.WeaponChanceDivisor;
+                        float num2 = ((float)Contract.Override.finalDifficulty + Control.Settings.VeryRareWeaponChance) / Control.Settings.WeaponChanceDivisor;
+                        float num3 = ((float)Contract.Override.finalDifficulty + Control.Settings.RareWeaponChance) / Control.Settings.WeaponChanceDivisor;
                         float[] array = null;
-                        if (chance < num2)
+
+                        if (num < num1)
                         {
-                            array = sc.Salvage.VeryRareWeaponLevel;
+                            array = Control.Settings.EliteRareWeaponLevel;
                         }
-                        else if (chance < num3)
+                        else if (num < num2)
                         {
-                            array = sc.Salvage.RareWeaponLevel;
+                            array = Control.Settings.VeryRareWeaponLevel;
+                        }
+                        else if (num < num3)
+                        {
+                            array = Control.Settings.RareWeaponLevel;
                         }
                         WeaponDef weaponDef = def as WeaponDef;
-                        if (array != null)
+                        if (weaponDef.WeaponSubType != WeaponSubType.NotSet && !weaponDef.ComponentTags.Contains("BLACKLISTED") && array != null)
                         {
                             List<WeaponDef_MDD> weaponsByTypeAndRarityAndOwnership = MetadataDatabase.Instance.GetWeaponsByTypeAndRarityAndOwnership(weaponDef.WeaponSubType, array);
                             if (weaponsByTypeAndRarityAndOwnership != null && weaponsByTypeAndRarityAndOwnership.Count > 0)
                             {
                                 weaponsByTypeAndRarityAndOwnership.Shuffle<WeaponDef_MDD>();
                                 WeaponDef_MDD weaponDef_MDD = weaponsByTypeAndRarityAndOwnership[0];
-                                weaponDef = UnityGameInstance.BattleTechGame.DataManager.WeaponDefs.Get(weaponDef_MDD.WeaponDefID);
-                                Control.LogDebug($"--- {def.Description.Id} upgraded to {weaponDef.Description.Id}");
-                                def = weaponDef;
+                                var DataManager = (DataManager)Traverse.Create(Contract).Field("dataManager").GetValue();
+                                weaponDef = DataManager.WeaponDefs.Get(weaponDef_MDD.WeaponDefID);
                             }
                         }
-
-
+                        def = weaponDef;
                     }
                     else
                     {
-                        float num2 = ((float)Contract.Override.finalDifficulty + sc.Salvage.VeryRareUpgradeChance) / sc.Salvage.UpgradeChanceDivisor;
-                        float num3 = ((float)Contract.Override.finalDifficulty + sc.Salvage.RareUpgradeChance) / sc.Salvage.UpgradeChanceDivisor;
+                        var rand = new Random();
+                        double num = rand.Next();
+                        float num1 = ((float)Contract.Override.finalDifficulty + Control.Settings.EliteRareUpgradeChance) / Control.Settings.UpgradeChanceDivisor;
+                        float num2 = ((float)Contract.Override.finalDifficulty + Control.Settings.VeryRareUpgradeChance) / Control.Settings.UpgradeChanceDivisor;
+                        float num3 = ((float)Contract.Override.finalDifficulty + Control.Settings.RareUpgradeChance) / Control.Settings.UpgradeChanceDivisor;
                         float[] array = null;
-                        var mechComponentDef = def;
-                        if (chance < num2)
+                        MechComponentDef mechComponentDef = def;
+                        if (num < num1)
                         {
-                            array = sc.Salvage.VeryRareUpgradeLevel;
+                            array = Control.Settings.EliteRareUpgradeLevel;
                         }
-                        else if (chance < num3)
+                        else if (num < num2)
                         {
-                            array = sc.Salvage.RareUpgradeLevel;
+                            array = Control.Settings.VeryRareUpgradeLevel;
                         }
-                        if (array != null)
+                        else if (num < num3)
                         {
-                            List<UpgradeDef_MDD> upgradesByRarityAndOwnership = MetadataDatabase.Instance.GetUpgradesByRarityAndOwnership(array);
-                            if (upgradesByRarityAndOwnership != null && upgradesByRarityAndOwnership.Count > 0)
+                            array = Control.Settings.RareUpgradeLevel;
+                        }
+                        if (array != null && !mechComponentDef.ComponentTags.Contains("BLACKLISTED"))
+                        {
+                            string upgradeTag = def.ComponentTags.FirstOrDefault(x => x.StartsWith("BR_UpgradeTag"));
+                            if (upgradeTag != null)
                             {
-                                upgradesByRarityAndOwnership.Shuffle<UpgradeDef_MDD>();
-                                UpgradeDef_MDD upgradeDef_MDD = upgradesByRarityAndOwnership[0];
-                                mechComponentDef = UnityGameInstance.BattleTechGame.DataManager.UpgradeDefs.Get(upgradeDef_MDD.UpgradeDefID);
-                                Control.LogDebug($"--- {def.Description.Id} upgraded to {mechComponentDef.Description.Id}");
-                                def = mechComponentDef;
+                                List<UpgradeDef_MDD> upgradesByRarityAndOwnership = MetadataDatabase.Instance.GetUpgradesByRarityAndOwnership(array);
+                                if (upgradesByRarityAndOwnership != null && upgradesByRarityAndOwnership.Count > 0)
+                                {
+                                    var DataManager = (DataManager)Traverse.Create(Contract).Field("dataManager").GetValue();
+                                    upgradesByRarityAndOwnership.Shuffle();
+                                    foreach (var upgradeDef_MDD in upgradesByRarityAndOwnership)
+                                    {
+                                        var tempMCD = DataManager.UpgradeDefs.Get(upgradeDef_MDD.UpgradeDefID);
+                                        if (tempMCD.ComponentTags.Contains(upgradeTag))
+                                            def = tempMCD;
+                                    }
+                                }
                             }
                         }
-
+                        def = mechComponentDef;
                     }
                 }
 
