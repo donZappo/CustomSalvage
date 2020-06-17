@@ -3,6 +3,8 @@ using BattleTech;
 using CustomComponents;
 using ErosionBrushPlugin;
 using System.Linq;
+using HBS.Logging;
+using BattleTech.BinkMedia;
 
 namespace CustomSalvage
 {
@@ -26,47 +28,75 @@ namespace CustomSalvage
 
         internal static int PartDestroyed(MechDef mech)
         {
+            Control.LogDebug("*****PartsDestroyed Beginning*****");
+            Control.LogDebug($"Salvaging {mech.Name}");
+
             if (mech.IsLocationDestroyed(ChassisLocations.CenterTorso))
+            {
+                Control.LogDebug($"CT Destroyed, {Control.Settings.CenterTorsoDestroyedParts} parts returned");
                 return Control.Settings.CenterTorsoDestroyedParts;
+            }
 
             var inventory = mech.inventory;
             var engine = inventory.FirstOrDefault(x => x.IsCategory("EngineCore"));
             var rand = new System.Random();
             var chance = rand.NextDouble();
+            if (engine != null)
+            {
+                Control.LogDebug("Logging Engine");
+                Control.LogDebug(engine.ComponentDefID);
+                Control.LogDebug(engine.DamageLevel.ToString());
+            }
+            else
+                Control.LogDebug("Engine is null");
             if (engine != null && engine.DamageLevel == ComponentDamageLevel.Destroyed && chance < Control.Settings.engineAsCTChance)
+            {
+                Control.LogDebug($"Engine Core Destroyed, roll failed, returning {Control.Settings.CenterTorsoDestroyedParts} parts.");
                 return Control.Settings.CenterTorsoDestroyedParts;
+            }
+            else if (engine != null && engine.DamageLevel == ComponentDamageLevel.Destroyed)
+                Control.LogDebug($"Engine Core Destroyed, roll passed. Moving on");
 
 
             float total = Control.Settings.SalvageArmWeight * 2 + Control.Settings.SalvageHeadWeight +
                           Control.Settings.SalvageLegWeight * 2 + Control.Settings.SalvageTorsoWeight * 3;
-
+            Control.LogDebug($"Total value: {total}");
             float val = total;
 
             val -= mech.IsLocationDestroyed(ChassisLocations.Head) ? Control.Settings.SalvageHeadWeight : 0;
-
+            Control.LogDebug($"After head: {val}");
             val -= mech.IsLocationDestroyed(ChassisLocations.LeftTorso)
                 ? Control.Settings.SalvageTorsoWeight
                 : 0;
+            Control.LogDebug($"After LT: {val}");
             val -= mech.IsLocationDestroyed(ChassisLocations.RightTorso)
                 ? Control.Settings.SalvageTorsoWeight
                 : 0;
+            Control.LogDebug($"After RT: {val}");
             val -= mech.IsLocationDestroyed(ChassisLocations.CenterTorso)
                 ? Control.Settings.SalvageTorsoWeight
                 : 0;
+            Control.LogDebug($"After CT: {val}");
 
             val -= mech.IsLocationDestroyed(ChassisLocations.LeftLeg) ? Control.Settings.SalvageLegWeight : 0;
+            Control.LogDebug($"After LL: {val}");
             val -= mech.IsLocationDestroyed(ChassisLocations.RightLeg) ? Control.Settings.SalvageLegWeight : 0;
+            Control.LogDebug($"After RL: {val}");
 
             val -= mech.IsLocationDestroyed(ChassisLocations.LeftArm) ? Control.Settings.SalvageArmWeight : 0;
-            val -= mech.IsLocationDestroyed(ChassisLocations.LeftLeg) ? Control.Settings.SalvageArmWeight : 0;
+            Control.LogDebug($"After LA: {val}");
+            val -= mech.IsLocationDestroyed(ChassisLocations.RightArm) ? Control.Settings.SalvageArmWeight : 0;
+            Control.LogDebug($"After RA: {val}");
 
             var constants = UnityGameInstance.BattleTechGame.Simulation.Constants;
 
             int maxParts = constants.Story.DefaultMechPartMax;
             if (Control.Settings.capSalvage)
-                maxParts = Control.Settings.maxSalvage;
+                maxParts = Math.Min(Control.Settings.maxSalvage, maxParts);
 
             int numparts = (int)(maxParts * val / total);
+
+            Control.LogDebug($"Number of Parts in Salvage: {maxParts}");
             if (numparts < 1)
                 numparts = 1;
             if (numparts > maxParts)
