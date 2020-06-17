@@ -33,7 +33,7 @@ namespace CustomSalvage
             var engine = inventory.FirstOrDefault(x => x.IsCategory("EngineCore"));
             var rand = new System.Random();
             var chance = rand.NextDouble();
-            if (engine.DamageLevel == ComponentDamageLevel.Destroyed && chance < Control.Settings.engineAsCTChance)
+            if (engine != null && engine.DamageLevel == ComponentDamageLevel.Destroyed && chance < Control.Settings.engineAsCTChance)
                 return Control.Settings.CenterTorsoDestroyedParts;
 
 
