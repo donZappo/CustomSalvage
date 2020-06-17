@@ -110,6 +110,10 @@ namespace CustomSalvage
         public float SalvageHeadWeight = 0.25f;
         public float SalvageCTWeight = 1.5f;
 
+        public bool capSalvage = true;
+        public int maxSalvage = 5;
+        public bool engineCountsAsCT = true;
+        public double engineAsCTChance = 0.5;
 
         public float VACTDestroyedMod = 0.35f;
         public float VABLDestroyedMod = 0.68f;
