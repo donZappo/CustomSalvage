@@ -49,7 +49,7 @@ namespace CustomSalvage
                 else
                 {
                     GenericPopupBuilder.Create($"Scrap {name}?",
-                            $"Are you sure you want to scrap this 'Mech Chassis? It will be removed permanently from your inventory.\n\nSCRAP VALUE: < color =#F79B26FF>{SimGameState.GetCBillString(value)}</color>")
+                            $"Are you sure you want to scrap this 'Mech Chassis? It will be removed permanently from your inventory.\n\nSCRAP VALUE: <color =#F79B26FF>{SimGameState.GetCBillString(value)}</color>")
                         .AddButton("Cancel", null, true, null)
                         .AddButton("scrap", () => ScrapChassis(1, ___selectedChassis, __instance, ___mechBay), true,
                             null)
