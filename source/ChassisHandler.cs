@@ -339,7 +339,7 @@ namespace CustomSalvage
                 if (Control.Settings.UseReadyDelay && new_mech.MechTags.First(x => x.StartsWith($"CSO-MainParts-")) != null)
                 {
                     string tempTagName = new_mech.MechTags.First(x => x.StartsWith($"CSO-MainParts-"));
-                    var match = Regex.Match(tempTagName, @"CSO-MainParts-(\d)$");
+                    var match = Regex.Match(tempTagName, @"CSO-MainParts-(\d+)");
                     var MDCount = float.Parse(match.Groups[1].ToString());
                     float chance = MDCount / sim.Constants.Story.DefaultMechPartMax;
                     chance = Mathf.Clamp(chance, 0, Control.Settings.MaxRecoveryChance);
@@ -426,7 +426,7 @@ namespace CustomSalvage
                         if (Control.Settings.UseReadyDelay)
                         {
                             string tempTagName = mech.MechTags.First(x => x.StartsWith($"CSO-MainParts-"));
-                            var match = Regex.Match(tempTagName, @"CSO-MainParts-(\d)$");
+                            var match = Regex.Match(tempTagName, @"CSO-MainParts-(\d+)");
                             var MDCount = float.Parse(match.Groups[1].ToString());
                             float chance = MDCount / sim.Constants.Story.DefaultMechPartMax;
                             chance = Mathf.Clamp(chance, 0, Control.Settings.MaxRecoveryChance);
